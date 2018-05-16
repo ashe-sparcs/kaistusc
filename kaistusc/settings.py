@@ -30,14 +30,19 @@ SECRET_KEY = '_dcwta0d49azy*1##hy*j*g)s8d3&q88q(eushtfqrx&ff#auw'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [u'143.248.234.160', u'localhost', u'student.kaist.ac.kr']
+ALLOWED_HOSTS = [u'143.248.234.160', u'localhost', u'student.kaist.ac.kr', u'kaistusc.hangpark.com']
 
-CSRF_TRUSTED_ORIGINS = [u'143.248.234.160', u'localhost', u'student.kaist.ac.kr']
+CSRF_TRUSTED_ORIGINS = [u'143.248.234.160', u'localhost', u'student.kaist.ac.kr', u'kaistusc.hangpark.com']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'apps.manager',
+    'apps.ksso',
+    'apps.board',
+    'apps.rule',
+    'apps.ot',
     'modeltranslation',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -48,11 +53,7 @@ INSTALLED_APPS = [
     'django_jinja',
     'rest_framework',
     'rest_framework.authtoken',
-    'apps.manager',
-    'apps.ksso',
-    'apps.board',
-    'apps.rule',
-    'apps.ot',
+
 ]
 
 MIDDLEWARE = [
@@ -75,7 +76,10 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'match_extension': '.jinja',
-            'extensions': django_jinja.builtins.DEFAULT_EXTENSIONS
+            'extensions': django_jinja.builtins.DEFAULT_EXTENSIONS,
+            'context_processors': [
+                'apps.manager.context_processors.development_ip',
+            ]
         },
     },
     {
@@ -103,8 +107,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'kaistusc',
-        'USER': os.getenv('DB_ENV_MYSQL_USER'),
-        'PASSWORD': os.getenv('DB_ENV_MYSQL_PASSWORD'),
+        'USER': os.getenv('MYSQL_USER'),
+        'PASSWORD': os.getenv('MYSQL_PASSWORD'),
         'HOST': os.getenv('MYSQL_HOST') or 'db',
         'PORT': '3306'
     }
@@ -135,8 +139,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ko-kr'
 
-TIME_ZONE = 'Asia/Seoul'
-
 LANGUAGES = (
     ('ko', 'Korean'),
     ('en', 'English'),
@@ -147,6 +149,8 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = False
+
+TIME_ZONE = 'Asia/Seoul'
 
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, "locale"),
@@ -162,6 +166,7 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static/dist"),
+    os.path.join(BASE_DIR, "node_modules/pdfjs-dist"),
 )
 
 STATIC_ROOT = '/var/www/static'
@@ -188,6 +193,56 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
 }
+
+# Logging
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'file': {
+            'format': '[%(asctime)s] (%(levelname)s) %(message)s',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'level': 'WARNING',
+            'formatter': 'file',
+            'filters': ['require_debug_false'],
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': os.path.join(BASE_DIR, 'kaistusc.log'),
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        },
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    }
+}
+
+try:
+    from .local_settings import *
+except ImportError:
+    pass
