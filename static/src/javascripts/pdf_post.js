@@ -70,7 +70,7 @@ $(document).ready(function() {
 
   // Asynchronous download PDF
   if (url) {
-    PDFJS.getDocument(url)
+    (PDFJS === undefined ? pdfjsLib : PDFJS).getDocument(url)
     .then(function(pdf) {
       currentPdf = pdf;
       goToPage(1);

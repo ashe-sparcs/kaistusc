@@ -8,23 +8,28 @@
     {% else %}
       {{ _('비밀글입니다.') }}
     {% endif %}
-  {% else %}
+  {% elif post.is_permitted(request.user, PERM_READ) %}
     {{ post.title }}
+  {% else %}
+    {{ _('읽기 권한이 없습니다.') }}
   {% endif %}
   </a>
-  <div class="collapse" id="collapse-example-{{post.id}}">
-    <div class="sponsor-content">
-      <div class="text-center">
-        {% for file in post.attachedfile_set.all() %}
-          <img src="{{ file.get_absolute_url() }}" alt="사진!">
-        {% endfor %}
+  {% if post.is_permitted(request.user, PERM_READ) %}
+    <div class="collapse" id="collapse-example-{{post.id}}">
+      <div class="sponsor-content">
+        <div class="text-center">
+          {% for file in post.attachedfile_set.all() %}
+            <img src="{{ file.get_absolute_url() }}" alt="사진!">
+          {% endfor %}
+        </div>
+        <div>
+          <p>{{ post.content|linebreaks }}</p>
+        </div>
+        {% include 'board/post/sponsor_post_func.jinja' %}
       </div>
-      <div>
-        <p>{{ post.content|linebreaks }}</p>
-      </div>
-      {% include 'board/post/sponsor_post_func.jinja' %}
     </div>
-  </div>
+  {% endif %}
+  
 {%- endmacro %}
 
 <div id="sponsor-list" class="list-group">

@@ -96,6 +96,7 @@ $().ready(function() {
     }
 
     var isLoading = false;
+    var permissionDenied = false;
     var numLoadedSponsorPosts = $("a[href*='#collapse-example-']").length;
     var numTotalSponsorPosts = -1;
     var search = getParameterByName('s');
@@ -106,6 +107,7 @@ $().ready(function() {
 
       if ((scrollHeight - scrollPosition) / scrollHeight === 0
           && !isLoading
+          && !permissionDenied
           && (numLoadedSponsorPosts < numTotalSponsorPosts || numTotalSponsorPosts === -1)) {
         // when scroll to bottom of the page
         // load more posts
@@ -123,8 +125,13 @@ $().ready(function() {
           drawLoadedSponsorPosts(data.results);
           numLoadedSponsorPosts = $("a[href*='#collapse-example-']").length;
           // draw on html
-        }).fail(function(e) {
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status == 403) {
+            alert('게시물 일기 권한이 없습니다.');
+            permissionDenied = true;
+          } else {
             alert('데이터 로드에 실패했습니다.');
+          }
         }).always(function() {
           isLoading = false;
         });
